@@ -1,0 +1,6 @@
+{
+  "name": "Дамдины Оюунгэрэл | Санхүүгийн боловсролын зангилаа & My Idol",
+  "description": "Санхүүгийн боловсрол, МУТСТ/AML сургалт, СТМ ББСБ зөвлөх үйлчилгээ болон Gemini-ээр ажиллах 'My Idol' интерактив туслах бүхий албан ёсны веб платформ.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
