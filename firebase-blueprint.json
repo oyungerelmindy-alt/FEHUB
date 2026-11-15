@@ -1,0 +1,268 @@
+{
+  "entities": {
+    "ServicePackage": {
+      "title": "ServicePackage",
+      "description": "Publicly visible training and advisory service package managed by the administrator.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display title of the service package.",
+          "minLength": 2,
+          "maxLength": 140
+        },
+        "shortDesc": {
+          "type": "string",
+          "description": "Concise 1-2 sentence summary of the service package.",
+          "minLength": 5,
+          "maxLength": 320
+        },
+        "price": {
+          "type": "string",
+          "description": "Formatted display price (e.g., 500,000₮-с).",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "categoryLabel": {
+          "type": "string",
+          "description": "Service category name.",
+          "minLength": 2,
+          "maxLength": 60
+        },
+        "deliveryTime": {
+          "type": "string",
+          "description": "Expected turnaround or delivery timeframe.",
+          "minLength": 2,
+          "maxLength": 60
+        },
+        "features": {
+          "type": "array",
+          "description": "List of up to 10 key deliverables included in the package."
+        },
+        "featured": {
+          "type": "boolean",
+          "description": "Whether this package is highlighted as featured."
+        },
+        "orderIndex": {
+          "type": "number",
+          "description": "Sort order index in the service table."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the last update."
+        }
+      },
+      "required": [
+        "name",
+        "shortDesc",
+        "price",
+        "categoryLabel",
+        "deliveryTime",
+        "features",
+        "featured",
+        "orderIndex",
+        "updatedAt"
+      ]
+    },
+    "OrderRequest": {
+      "title": "OrderRequest",
+      "description": "Service order submitted by a visitor from the Services page.",
+      "type": "object",
+      "properties": {
+        "orderRef": {
+          "type": "string",
+          "description": "Unique human-readable reference number.",
+          "minLength": 4,
+          "maxLength": 32
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name of the requester.",
+          "minLength": 2,
+          "maxLength": 120
+        },
+        "organization": {
+          "type": "string",
+          "description": "Organization or NBFI name.",
+          "minLength": 2,
+          "maxLength": 160
+        },
+        "phone": {
+          "type": "string",
+          "description": "Contact phone number.",
+          "minLength": 6,
+          "maxLength": 32
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Contact email address.",
+          "minLength": 5,
+          "maxLength": 160
+        },
+        "serviceId": {
+          "type": "string",
+          "description": "Identifier of the ordered service package.",
+          "minLength": 2,
+          "maxLength": 80,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "serviceName": {
+          "type": "string",
+          "description": "Name of the ordered service package.",
+          "minLength": 2,
+          "maxLength": 160
+        },
+        "packagePrice": {
+          "type": "string",
+          "description": "Price label at the time of order.",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "participantsOrScope": {
+          "type": "string",
+          "description": "Optional employee count or branch scope.",
+          "maxLength": 160
+        },
+        "preferredDate": {
+          "type": "string",
+          "description": "Optional preferred schedule date.",
+          "maxLength": 32
+        },
+        "message": {
+          "type": "string",
+          "description": "Additional order notes or requirements.",
+          "maxLength": 1500
+        },
+        "status": {
+          "type": "string",
+          "enum": ["new", "reviewing", "confirmed", "closed"],
+          "description": "Current workflow status of the order."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the order was created."
+        }
+      },
+      "required": [
+        "orderRef",
+        "name",
+        "organization",
+        "phone",
+        "email",
+        "serviceId",
+        "serviceName",
+        "packagePrice",
+        "status",
+        "createdAt"
+      ]
+    },
+    "ContactMessage": {
+      "title": "ContactMessage",
+      "description": "General consultation or partnership inquiry submitted from the Contact page.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Sender full name.",
+          "minLength": 2,
+          "maxLength": 120
+        },
+        "organization": {
+          "type": "string",
+          "description": "Organization name.",
+          "minLength": 2,
+          "maxLength": 160
+        },
+        "phone": {
+          "type": "string",
+          "description": "Sender phone number.",
+          "minLength": 6,
+          "maxLength": 32
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Sender email address.",
+          "minLength": 5,
+          "maxLength": 160
+        },
+        "serviceType": {
+          "type": "string",
+          "description": "Selected area of interest.",
+          "minLength": 2,
+          "maxLength": 160
+        },
+        "message": {
+          "type": "string",
+          "description": "Inquiry message body.",
+          "maxLength": 1500
+        },
+        "status": {
+          "type": "string",
+          "enum": ["new", "replied"],
+          "description": "Whether the administrator has replied."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the inquiry was created."
+        }
+      },
+      "required": [
+        "name",
+        "organization",
+        "phone",
+        "email",
+        "serviceType",
+        "status",
+        "createdAt"
+      ]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Authorized administrator record for role verification.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Verified Google account email.",
+          "minLength": 5,
+          "maxLength": 160
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin"],
+          "description": "Administrator role."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when granted access."
+        }
+      },
+      "required": ["email", "role", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/services/{serviceId}": {
+      "schema": { "$ref": "#/entities/ServicePackage" },
+      "description": "Public service packages catalog editable by verified administrators."
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/OrderRequest" },
+      "description": "Service orders submitted by clients and managed exclusively by administrators."
+    },
+    "/contacts/{contactId}": {
+      "schema": { "$ref": "#/entities/ContactMessage" },
+      "description": "Contact form inquiries submitted by visitors and managed exclusively by administrators."
+    },
+    "/admins/{userId}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Explicit administrator allowlist keyed by Firebase Auth UID."
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Globe, MapPin, Send, CheckCircle2, AlertCircle, Loader2, ChevronRight } from 'lucide-react';
 import { PageId } from '../types';
+import { createContactInFirestore } from '../lib/firestoreService';
 
 interface ContactSectionProps {
   onNavigate: (page: PageId) => void;
@@ -27,16 +28,21 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onNavigate }) =>
     setErrorMessage(null);
 
     try {
-      const response = await fetch('/api/contact', {
+      await createContactInFirestore({
+        name: formData.name,
+        organization: formData.organization,
+        phone: formData.phone,
+        email: formData.email,
+        serviceType: formData.serviceType,
+        message: formData.message,
+      });
+
+      // Optional non-blocking server webhook notification
+      void fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.error || 'Хүсэлт илгээхэд алдаа гарлаа.');
-      }
+      }).catch(() => {});
 
       setFormSubmitted(true);
       setFormData({
@@ -47,8 +53,12 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onNavigate }) =>
         serviceType: 'МУТСТ & KYC Захиалгат сургалт (500,000₮-с)',
         message: '',
       });
-    } catch (err: any) {
-      setErrorMessage(err?.message || 'Сүлжээний алдаа гарлаа. Та дахин оролдоно уу.');
+    } catch (err: unknown) {
+      setErrorMessage(
+        err instanceof Error && !err.message.startsWith('{')
+          ? err.message
+          : 'Хүсэлт хадгалахад алдаа гарлаа. Мэдээллээ шалгаад дахин оролдоно уу.'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -138,7 +148,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onNavigate }) =>
           <div className="lg:col-span-7 bg-white border border-slate-200 rounded-xl p-6 sm:p-8">
             <h3 className="text-lg font-bold text-[#0F294A]">Санал авах маягт</h3>
             <p className="text-xs sm:text-sm text-slate-500 mt-1 mb-6">
-              Мэдээллээ үлдээснээр ажлын 24 цагийн дотор эргэн холбогдох болно.
+              Мэдээллээ үлдээснээр өгөгдлийн санд бүртгэгдэж, ажлын 24 цагийн дотор эргэн холбогдох болно.
             </p>
 
             {formSubmitted ? (
@@ -146,7 +156,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onNavigate }) =>
                 <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
                 <h4 className="text-base font-bold text-[#0F294A]">Хүсэлтийг амжилттай хүлээн авлаа</h4>
                 <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">
-                  Баярлалаа. Таны илгээсэн мэдээллийг хүлээн авсан бөгөөд тун удахгүй эргэн холбогдох болно.
+                  Баярлалаа. Таны илгээсэн мэдээллийг Firestore өгөгдлийн санд бүртгэсэн бөгөөд тун
+                  удахгүй эргэн холбогдох болно.
                 </p>
                 <button
                   type="button"
@@ -166,6 +177,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onNavigate }) =>
                     <input
                       type="text"
                       required
+                      minLength={2}
+                      maxLength={120}
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="Овог, Нэр"
@@ -180,6 +193,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onNavigate }) =>
                     <input
                       type="text"
                       required
+                      minLength={2}
+                      maxLength={160}
                       value={formData.organization}
                       onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
                       placeholder="ББСБ / Байгууллагын нэр"
@@ -196,6 +211,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onNavigate }) =>
                     <input
                       type="tel"
                       required
+                      minLength={6}
+                      maxLength={32}
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       placeholder="9911-XXXX"
@@ -210,6 +227,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onNavigate }) =>
                     <input
                       type="email"
                       required
+                      minLength={5}
+                      maxLength={160}
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="name@organization.mn"
@@ -249,6 +268,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onNavigate }) =>
                   </label>
                   <textarea
                     rows={4}
+                    maxLength={1500}
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     placeholder="Байгууллагын ажилтны тоо, сургалтын хугацаа эсвэл зөвлөх ажлын хэрэгцээгээ бичнэ үү..."
@@ -271,7 +291,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onNavigate }) =>
                   {submitting ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Илгээж байна...</span>
+                      <span>Хадгалж байна...</span>
                     </>
                   ) : (
                     <>

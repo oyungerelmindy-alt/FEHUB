@@ -1,0 +1,216 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net: deny all reads and writes by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Reusable Hardened Helpers ---
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'oyungerel.mindy@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // --- Validation Blueprints ---
+    function isValidService(data) {
+      return data.keys().hasAll([
+          'name',
+          'shortDesc',
+          'price',
+          'categoryLabel',
+          'deliveryTime',
+          'features',
+          'featured',
+          'orderIndex',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'name',
+          'shortDesc',
+          'price',
+          'categoryLabel',
+          'deliveryTime',
+          'features',
+          'featured',
+          'orderIndex',
+          'updatedAt'
+        ])
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 140
+        && data.shortDesc is string && data.shortDesc.size() >= 5 && data.shortDesc.size() <= 320
+        && data.price is string && data.price.size() >= 2 && data.price.size() <= 40
+        && data.categoryLabel is string && data.categoryLabel.size() >= 2 && data.categoryLabel.size() <= 60
+        && data.deliveryTime is string && data.deliveryTime.size() >= 2 && data.deliveryTime.size() <= 60
+        && data.features is list && data.features.size() >= 1 && data.features.size() <= 10
+        && data.features[0] is string && data.features[0].size() <= 240
+        && data.featured is bool
+        && data.orderIndex is number && data.orderIndex >= 0 && data.orderIndex <= 1000
+        && data.updatedAt == request.time;
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll([
+          'orderRef',
+          'name',
+          'organization',
+          'phone',
+          'email',
+          'serviceId',
+          'serviceName',
+          'packagePrice',
+          'status',
+          'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'orderRef',
+          'name',
+          'organization',
+          'phone',
+          'email',
+          'serviceId',
+          'serviceName',
+          'packagePrice',
+          'participantsOrScope',
+          'preferredDate',
+          'message',
+          'status',
+          'createdAt'
+        ])
+        && data.orderRef is string && data.orderRef.size() >= 4 && data.orderRef.size() <= 32
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 120
+        && data.organization is string && data.organization.size() >= 2 && data.organization.size() <= 160
+        && data.phone is string && data.phone.size() >= 6 && data.phone.size() <= 32
+        && data.email is string && data.email.size() >= 5 && data.email.size() <= 160
+        && data.serviceId is string && data.serviceId.size() >= 2 && data.serviceId.size() <= 80 && data.serviceId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.serviceName is string && data.serviceName.size() >= 2 && data.serviceName.size() <= 160
+        && data.packagePrice is string && data.packagePrice.size() >= 2 && data.packagePrice.size() <= 40
+        && (!('participantsOrScope' in data) || (data.participantsOrScope is string && data.participantsOrScope.size() <= 160))
+        && (!('preferredDate' in data) || (data.preferredDate is string && data.preferredDate.size() <= 32))
+        && (!('message' in data) || (data.message is string && data.message.size() <= 1500))
+        && data.status in ['new', 'reviewing', 'confirmed', 'closed'];
+    }
+
+    function isValidContact(data) {
+      return data.keys().hasAll([
+          'name',
+          'organization',
+          'phone',
+          'email',
+          'serviceType',
+          'status',
+          'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'name',
+          'organization',
+          'phone',
+          'email',
+          'serviceType',
+          'message',
+          'status',
+          'createdAt'
+        ])
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 120
+        && data.organization is string && data.organization.size() >= 2 && data.organization.size() <= 160
+        && data.phone is string && data.phone.size() >= 6 && data.phone.size() <= 32
+        && data.email is string && data.email.size() >= 5 && data.email.size() <= 160
+        && data.serviceType is string && data.serviceType.size() >= 2 && data.serviceType.size() <= 160
+        && (!('message' in data) || (data.message is string && data.message.size() <= 1500))
+        && data.status in ['new', 'replied'];
+    }
+
+    function isValidAdmin(data) {
+      return data.keys().hasAll(['email', 'role', 'createdAt'])
+        && data.keys().hasOnly(['email', 'role', 'createdAt'])
+        && data.email is string && data.email.size() >= 5 && data.email.size() <= 160
+        && data.role == 'admin'
+        && data.createdAt == request.time;
+    }
+
+    // --- Collection Rules ---
+
+    // Public Services Catalog (no PII)
+    match /services/{serviceId} {
+      allow get, list: if true;
+      allow create: if isAdmin() && isValidId(serviceId) && isValidService(incoming());
+      allow update: if isAdmin()
+        && isValidId(serviceId)
+        && isValidService(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'name',
+          'shortDesc',
+          'price',
+          'categoryLabel',
+          'deliveryTime',
+          'features',
+          'featured',
+          'orderIndex',
+          'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(serviceId);
+    }
+
+    // Service Orders (PII isolated to Admins; public can create valid 'new' orders only)
+    match /orders/{orderId} {
+      allow get, list: if isAdmin();
+      allow create: if isValidId(orderId)
+        && isValidOrder(incoming())
+        && incoming().status == 'new'
+        && incoming().createdAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(orderId)
+        && isValidOrder(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().orderRef == existing().orderRef
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+      allow delete: if isAdmin() && isValidId(orderId);
+    }
+
+    // Contact Inquiries (PII isolated to Admins; public can create valid 'new' messages only)
+    match /contacts/{contactId} {
+      allow get, list: if isAdmin();
+      allow create: if isValidId(contactId)
+        && isValidContact(incoming())
+        && incoming().status == 'new'
+        && incoming().createdAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(contactId)
+        && isValidContact(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+      allow delete: if isAdmin() && isValidId(contactId);
+    }
+
+    // Admin Users Allowlist
+    match /admins/{userId} {
+      allow get: if isVerifiedUser() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isAdmin() && isValidId(userId) && isValidAdmin(incoming());
+      allow update: if false;
+      allow delete: if isAdmin() && isValidId(userId);
+    }
+  }
+}

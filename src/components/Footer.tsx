@@ -61,6 +61,15 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   Төсөл & Кейс судалгаа
                 </button>
               </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('admin')}
+                  className="hover:text-white transition-colors cursor-pointer"
+                >
+                  Админ удирдлага
+                </button>
+              </li>
             </ul>
           </div>
 

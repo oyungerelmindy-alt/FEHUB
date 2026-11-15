@@ -8,11 +8,11 @@ interface NavbarProps {
 }
 
 const NAV_LINKS: { id: PageId; label: string }[] = [
-  { id: 'home', label: 'Нүүр' },
   { id: 'about', label: 'Бидний тухай' },
   { id: 'training', label: 'Сургалт & Систем' },
   { id: 'services', label: 'Үйлчилгээ' },
   { id: 'cases', label: 'Төсөл & Кейс' },
+  { id: 'admin', label: 'Админ' },
 ];
 
 export const Navbar: React.FC<NavbarProps> = ({ activePage, onNavigate }) => {
@@ -31,6 +31,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, onNavigate }) => {
           <button
             type="button"
             onClick={() => handleLinkClick('home')}
+            aria-label="Нүүр хуудас руу буцах"
             className="text-base sm:text-lg font-extrabold tracking-tight text-[#0F294A] whitespace-nowrap shrink-0 cursor-pointer text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0F294A]"
           >
             FEHUB · Д. Оюунгэрэл
@@ -88,6 +89,17 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, onNavigate }) => {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-4 space-y-1">
+          <button
+            type="button"
+            onClick={() => handleLinkClick('home')}
+            className={`block w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium cursor-pointer ${
+              activePage === 'home'
+                ? 'bg-slate-100 text-[#0F294A] font-semibold'
+                : 'text-slate-700 hover:bg-slate-50 hover:text-[#0F294A]'
+            }`}
+          >
+            Нүүр
+          </button>
           {NAV_LINKS.map((link) => {
             const isActive = activePage === link.id;
             return (

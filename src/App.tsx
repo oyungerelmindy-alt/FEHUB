@@ -6,10 +6,19 @@ import { TrainingAndSystemsSection } from './components/TrainingAndSystemsSectio
 import { ServicesPricingSection } from './components/ServicesPricingSection';
 import { CasesSection } from './components/CasesSection';
 import { ContactSection } from './components/ContactSection';
+import { AdminSection } from './components/AdminSection';
 import { Footer } from './components/Footer';
 import { PageId } from './types';
 
-const VALID_PAGES: PageId[] = ['home', 'about', 'training', 'services', 'cases', 'contact'];
+const VALID_PAGES: PageId[] = [
+  'home',
+  'about',
+  'training',
+  'services',
+  'cases',
+  'contact',
+  'admin',
+];
 
 function getPageFromHash(): PageId {
   const hash = window.location.hash.replace('#', '') as PageId;
@@ -48,6 +57,7 @@ export default function App() {
         {activePage === 'services' && <ServicesPricingSection onNavigate={handleNavigate} />}
         {activePage === 'cases' && <CasesSection onNavigate={handleNavigate} />}
         {activePage === 'contact' && <ContactSection onNavigate={handleNavigate} />}
+        {activePage === 'admin' && <AdminSection onNavigate={handleNavigate} />}
       </main>
 
       <Footer onNavigate={handleNavigate} />
